@@ -10,4 +10,6 @@
 
 @interface PlayingCardDeck : Deck
 
+@property (strong, nonatomic) NSString *suit;
+
 @end
