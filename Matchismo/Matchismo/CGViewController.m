@@ -7,10 +7,12 @@
 //
 
 #import "CGViewController.h"
+#import "PlayingCardDeck.h"
 
 @interface CGViewController ()
 @property (weak, nonatomic) IBOutlet UILabel *flipsLabel;
 @property (nonatomic) int flipCount;
+@property (strong, nonatomic) PlayingCardDeck *deck;
 @end
 
 @implementation CGViewController
