@@ -11,11 +11,19 @@
 
 @interface CGViewController ()
 @property (weak, nonatomic) IBOutlet UILabel *flipsLabel;
+@property (strong, nonatomic) Deck *deck;
 @property (nonatomic) int flipCount;
-@property (strong, nonatomic) PlayingCardDeck *deck;
 @end
 
 @implementation CGViewController
+
+- (Deck *)deck {
+    if (!_deck) {
+        _deck = [[PlayingCardDeck alloc] init];
+    }
+    
+    return _deck;
+}
 
 - (void)setFlipCount:(int)flipCount {
     _flipCount = flipCount;
@@ -24,16 +32,19 @@
 }
 
 - (IBAction)touchCardButton:(UIButton *)sender {
-    if ([sender.currentTitle length]) {
-        [sender setBackgroundImage:[UIImage imageNamed:@"cardback"]
-                          forState:UIControlStateNormal];
-        [sender setTitle:@"" forState:UIControlStateNormal];
-    } else {
-        [sender setBackgroundImage:[UIImage imageNamed:@"cardfront"]
-                          forState:UIControlStateNormal];
-        [sender setTitle:@"A♣︎" forState:UIControlStateNormal];
+    if ([self.deck count]) {
+        if ([sender.currentTitle length]) {
+            [sender setBackgroundImage:[UIImage imageNamed:@"cardback"]
+                              forState:UIControlStateNormal];
+            [sender setTitle:@"" forState:UIControlStateNormal];
+        } else {
+            Card *topCard = [self.deck drawRandomCard];
+            [sender setBackgroundImage:[UIImage imageNamed:@"cardfront"]
+                              forState:UIControlStateNormal];
+            [sender setTitle:[topCard contents] forState:UIControlStateNormal];
+        }
+        self.flipCount++;
     }
-    self.flipCount++;
 }
 
 @end

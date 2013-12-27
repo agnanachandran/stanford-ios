@@ -35,7 +35,7 @@
 
 // We'll leave this one private since the public API for the rank is purely numeric
 + (NSArray *)rankStrings {
-    return @[@"?", @"A", @"2", @"3", @"4", @"5", @"6", @"7", @"8", @"9", @"J", @"Q", @"K"];
+    return @[@"?", @"A", @"2", @"3", @"4", @"5", @"6", @"7", @"8", @"9", @"10", @"J", @"Q", @"K"];
 }
 
  // Use self instead of class name since we want any subclasses
