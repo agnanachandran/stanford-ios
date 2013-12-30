@@ -8,27 +8,24 @@
 
 #import "CGViewController.h"
 #import "PlayingCardDeck.h"
+#import "CardMatchingGame.h"
 
 @interface CGViewController ()
-@property (weak, nonatomic) IBOutlet UILabel *flipsLabel;
+@property (strong, nonatomic) IBOutletCollection(UIButton) NSArray *cardButtons;
 @property (strong, nonatomic) Deck *deck;
-@property (nonatomic) int flipCount;
+@property (strong, nonatomic) CardMatchingGame *game;
 @end
 
 @implementation CGViewController
 
-- (Deck *)deck {
-    if (!_deck) {
-        _deck = [[PlayingCardDeck alloc] init];
-    }
-    
-    return _deck;
+- (CardMatchingGame *)game {
+    if (!_game) _game = [[CardMatchingGame  alloc] initWithCardCount:[self.cardButtons count]
+                                                           usingDeck:self.deck];
+    return _game;
 }
 
-- (void)setFlipCount:(int)flipCount {
-    _flipCount = flipCount;
-    self.flipsLabel.text = [NSString stringWithFormat:@"Flips: %d", self.flipCount];
-    NSLog(@"Flip count: %d", flipCount);
+- (Deck *)createDeck {
+    return [[PlayingCardDeck alloc] init];
 }
 
 - (IBAction)touchCardButton:(UIButton *)sender {
@@ -43,7 +40,6 @@
                               forState:UIControlStateNormal];
             [sender setTitle:[topCard contents] forState:UIControlStateNormal];
         }
-        self.flipCount++;
     }
 }
 
