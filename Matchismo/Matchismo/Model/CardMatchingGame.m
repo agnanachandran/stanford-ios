@@ -27,6 +27,7 @@
 
 - (instancetype)initWithCardCount:(NSUInteger)count
                         usingDeck:(Deck *)deck
+                     withMaxMatch:(NSUInteger)maxMatch
 {
     if (count < 2) {
         self = nil;
@@ -45,6 +46,7 @@
             }
         }
     }
+    self.maxMatch = maxMatch;
     return self;
 }
 
@@ -64,18 +66,28 @@ static const int COST_TO_CHOOSE = 1;
         // match against another card
         // Look in self.cards for the possible match
         else {
+            // array of all the cards to match (other than the card that was touched)
+            NSMutableArray *otherCards = [[NSMutableArray alloc] init];
             for (Card *otherCard in self.cards) {
                 if (otherCard.isChosen && !otherCard.isMatched) {
-                    int matchScore = [card match:@[otherCard]];
-                    if (matchScore) {
-                        self.score += matchScore * MATCH_BONUS;
-                        card.matched = YES;
-                        otherCard.matched = YES;
-                    } else {
-                        self.score -= MISMATCHED_PENALTY;
-                        otherCard.chosen = NO;
+                    [otherCards addObject:otherCard];
+                }
+                // stop searching; we've found all possible matches
+                if ([otherCards count] == self.maxMatch - 1) break;
+            }
+            if ([otherCards count] == self.maxMatch - 1) {
+                int matchScore = [card match:otherCards];
+                if (matchScore) {
+                    self.score += matchScore * MATCH_BONUS;
+                    card.matched = YES;
+                    for (Card *matchCard in otherCards) {
+                        matchCard.matched = YES;
                     }
-                    break;
+                } else {
+                    self.score -= MISMATCHED_PENALTY;
+                    for (Card *matchCard in otherCards) {
+                        matchCard.chosen = NO;
+                    }
                 }
             }
             self.score -= COST_TO_CHOOSE;
