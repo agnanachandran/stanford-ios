@@ -64,6 +64,7 @@ static const int COST_TO_CHOOSE = 1;
         // That's dealt with in the controller though
         if (card.isChosen) {
             card.chosen = NO;
+            self.justMatched = NO;
         }
         // match against another card
         // Look in self.cards for the possible match
@@ -95,6 +96,8 @@ static const int COST_TO_CHOOSE = 1;
                         matchCard.chosen = NO;
                     }
                 }
+            } else {
+                self.justMatched = NO;
             }
             self.score -= COST_TO_CHOOSE;
             card.chosen = YES;

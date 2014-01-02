@@ -16,6 +16,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numberMatchControl;
+@property (weak, nonatomic) NSMutableArray *history;
 @end
 
 @implementation CGViewController
@@ -33,12 +34,33 @@
 }
 
 - (IBAction)touchCardButton:(UIButton *)sender {
+    
+    NSMutableArray *chosenCards = [[NSMutableArray alloc] init];
+    
+    for (UIButton *cardButton in self.cardButtons) {
+        NSInteger cardIndex = [self.cardButtons indexOfObject:cardButton];
+        Card *card = [self.game cardAtIndex:cardIndex];
+        if (card.isChosen && !card.isMatched) {
+            [chosenCards addObject:card];
+        }
+    }
+    
     // Disable segmented control on (first) card button press
     [self.numberMatchControl setEnabled:NO];
     NSInteger cardIndex = [self.cardButtons indexOfObject:sender];
+    
     [self.game chooseCardAtIndex:cardIndex];
     [self updateUI];
-    [self updateInfoLabelWithCards];
+    Card *card = [self.game cardAtIndex:cardIndex]; // card the user just chose
+    
+    // remove card if already in chosenCards (i.e., it has just been unselected
+    // otherwise add it since it was just chosen by the user
+    if ([chosenCards containsObject:card]) {
+        [chosenCards removeObject:card];
+    } else {
+        [chosenCards addObject:card];
+    }
+    [self updateInfoLabelWithCards:chosenCards];
 }
 
 - (IBAction)touchRedealButton:(UIButton *)sender
@@ -64,7 +86,7 @@
     [self updateUI];
     // Let user select two/three card match upon re-deal
     [self.numberMatchControl setEnabled:YES];
-    
+    self.infoLabel.text = @"";
 }
 
 - (void)updateUI
@@ -81,34 +103,42 @@
     self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld", self.game.score];
 }
 
-- (void)updateInfoLabelWithCards
+- (void)updateInfoLabelWithCards:(NSMutableArray *)chosenCards
 {
-    NSMutableArray *cards = [[NSMutableArray alloc] init];
+    // whether or not the cards array contained a match
     BOOL didMatch = self.game.justMatched;
     
-    // add all chosen cards to cards array
-    for (UIButton *cardButton in self.cardButtons) {
-        NSInteger cardIndex = [self.cardButtons indexOfObject:cardButton];
-        Card *card = [self.game cardAtIndex:cardIndex];
-        if (card.isChosen) {
-            [cards addObject:card];
-        }
-    }
-    
-    if ([cards count] == 0) {
+    if ([chosenCards count] == 0) {
         self.infoLabel.text = @"";
-    } else if ([cards count] == 1) {
-        Card *card = [cards firstObject];
-        self.infoLabel.text = [card contents];
-    } else if ([cards count] == 2) {
-        Card *firstCard = cards[0];
-        Card *secondCard = cards[1];
-        if (didMatch) {
-            self.infoLabel.text = [NSString stringWithFormat:@"Matched %@ and %@ for %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+    } else if ([chosenCards count] == 1) {
+        Card *card = [chosenCards firstObject];
+        if (card.isChosen) {
+            self.infoLabel.text = card.contents;
         } else {
-            self.infoLabel.text = [NSString stringWithFormat:@"%@ and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+            self.infoLabel.text = @"";
         }
-        
+    } else if ([chosenCards count] == 2) {
+        Card *firstCard = chosenCards[0];
+        Card *secondCard = chosenCards[1];
+        if (self.game.maxMatch == 2) {
+            if (didMatch) {
+                self.infoLabel.text = [NSString stringWithFormat:@"Matched %@ and %@ for %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+            } else {
+                self.infoLabel.text = [NSString stringWithFormat:@"%@ and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+            }
+        } else if (self.game.maxMatch == 3) {
+            // User just chose another card in 3-match mode
+            self.infoLabel.text = secondCard.contents;
+        }
+    } else if ([chosenCards count] == 3 && self.game.maxMatch == 3) {
+        Card *firstCard = chosenCards[0];
+        Card *secondCard = chosenCards[1];
+        Card *thirdCard = chosenCards[2];
+        if (didMatch) {
+            self.infoLabel.text = [NSString stringWithFormat:@"Matched %@, %@, and %@ for %ld points.", firstCard.contents, secondCard.contents, thirdCard.contents, self.game.lastScore];
+        } else {
+            self.infoLabel.text = [NSString stringWithFormat:@"%@, %@, and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, thirdCard.contents, self.game.lastScore];
+        }
     }
 }
 
