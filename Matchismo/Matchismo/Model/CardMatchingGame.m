@@ -9,7 +9,9 @@
 #import "CardMatchingGame.h"
 
 @interface CardMatchingGame ()
-@property (nonatomic,readwrite) NSInteger score;
+@property (nonatomic, readwrite) NSInteger score;
+@property (nonatomic, readwrite) NSInteger lastScore;
+@property (nonatomic, readwrite) BOOL justMatched;
 // though readwrite is the default, we say readwrite
 // to override the readonly in the public API
 
@@ -78,13 +80,17 @@ static const int COST_TO_CHOOSE = 1;
             if ([otherCards count] == self.maxMatch - 1) {
                 int matchScore = [card match:otherCards];
                 if (matchScore) {
-                    self.score += matchScore * MATCH_BONUS;
+                    self.justMatched = YES;
+                    self.lastScore = matchScore * MATCH_BONUS;
+                    self.score += self.lastScore;
                     card.matched = YES;
                     for (Card *matchCard in otherCards) {
                         matchCard.matched = YES;
                     }
                 } else {
-                    self.score -= MISMATCHED_PENALTY;
+                    self.justMatched = NO;
+                    self.lastScore = MISMATCHED_PENALTY;
+                    self.score -= self.lastScore;
                     for (Card *matchCard in otherCards) {
                         matchCard.chosen = NO;
                     }

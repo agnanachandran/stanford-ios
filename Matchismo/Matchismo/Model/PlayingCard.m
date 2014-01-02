@@ -14,16 +14,43 @@
 {
     int score = 0;
     
+    // two card matching
     if ([otherCards count] == 1) {
         PlayingCard *otherCard = [otherCards firstObject];
         if ([self.suit isEqualToString:otherCard.suit]) {
-            score = 4;
+            // same suit
+            score = 2;
         } else if (self.rank == otherCard.rank) {
-            score = 16;
+            // same rank
+            score = 8;
         }
     } else if ([otherCards count] == 2) {
         // three card matching
-        score = 100;
+        NSMutableSet *ranks = [[NSMutableSet alloc] init]; // set of ranks
+        NSMutableSet *suits = [[NSMutableSet alloc] init]; // set of suits
+        [ranks addObject:[NSNumber numberWithUnsignedInteger:self.rank]];
+        [suits addObject:self.suit];
+        for (PlayingCard *card in otherCards) {
+            [ranks addObject:[NSNumber numberWithUnsignedInteger:card.rank]];
+            [suits addObject:card.suit];
+        }
+        
+        // two matching suits
+        if ([suits count] == 2) {
+            score += 1;
+        }
+        // two matching ranks
+        if ([ranks count] == 2) {
+            score += 3;
+        }
+        // three matching suits
+        if ([suits count] == 1) {
+            score += 10;
+        }
+        // three matching ranks
+        if ([ranks count] == 1) {
+            score += 200;
+        }
     }
     return score;
 }

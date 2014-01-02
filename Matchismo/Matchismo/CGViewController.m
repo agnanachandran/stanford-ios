@@ -14,10 +14,8 @@
 @property (strong, nonatomic) IBOutletCollection(UIButton) NSArray *cardButtons;
 @property (strong, nonatomic) CardMatchingGame *game;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
-@property (weak, nonatomic) IBOutlet UIButton *redealButton;
+@property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numberMatchControl;
-// set to NO by default; which is congruent with the fact
-// that 2-card-match is selected by default in the UI
 @end
 
 @implementation CGViewController
@@ -40,6 +38,7 @@
     NSInteger cardIndex = [self.cardButtons indexOfObject:sender];
     [self.game chooseCardAtIndex:cardIndex];
     [self updateUI];
+    [self updateInfoLabelWithCards];
 }
 
 - (IBAction)touchRedealButton:(UIButton *)sender
@@ -80,6 +79,37 @@
         cardButton.enabled = !card.isMatched;
     }
     self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld", self.game.score];
+}
+
+- (void)updateInfoLabelWithCards
+{
+    NSMutableArray *cards = [[NSMutableArray alloc] init];
+    BOOL didMatch = self.game.justMatched;
+    
+    // add all chosen cards to cards array
+    for (UIButton *cardButton in self.cardButtons) {
+        NSInteger cardIndex = [self.cardButtons indexOfObject:cardButton];
+        Card *card = [self.game cardAtIndex:cardIndex];
+        if (card.isChosen) {
+            [cards addObject:card];
+        }
+    }
+    
+    if ([cards count] == 0) {
+        self.infoLabel.text = @"";
+    } else if ([cards count] == 1) {
+        Card *card = [cards firstObject];
+        self.infoLabel.text = [card contents];
+    } else if ([cards count] == 2) {
+        Card *firstCard = cards[0];
+        Card *secondCard = cards[1];
+        if (didMatch) {
+            self.infoLabel.text = [NSString stringWithFormat:@"Matched %@ and %@ for %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+        } else {
+            self.infoLabel.text = [NSString stringWithFormat:@"%@ and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+        }
+        
+    }
 }
 
 - (NSString *)titleForCard:(Card *)card
