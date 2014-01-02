@@ -16,6 +16,8 @@
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numberMatchControl;
+// array of CardMatchingGame and array of infoLabel strings
+@property (weak, nonatomic) IBOutlet UISlider *historySlider;
 @property (weak, nonatomic) NSMutableArray *history;
 @end
 
@@ -33,8 +35,23 @@
     return [[PlayingCardDeck alloc] init];
 }
 
+- (NSMutableArray *)history
+{
+    if (!_history) _history = [self restartHistory];
+    return _history;
+}
+
+- (NSMutableArray *)restartHistory
+{
+    return [[NSMutableArray alloc] initWithObjects: @[], @[], nil];
+}
+- (IBAction)historySliderChanged:(UISlider *)sender {
+    
+}
+
 - (IBAction)touchCardButton:(UIButton *)sender {
     
+    // cards that have are chosen and not matched; used for infoLabel's text
     NSMutableArray *chosenCards = [[NSMutableArray alloc] init];
     
     for (UIButton *cardButton in self.cardButtons) {
@@ -61,6 +78,22 @@
         [chosenCards addObject:card];
     }
     [self updateInfoLabelWithCards:chosenCards];
+    
+    [self updateHistory];
+}
+
+- (void)updateHistory
+{
+    [self.history[0] addObject:self.game];
+    [self.history[1] addObject:self.infoLabel.text];
+}
+
+- (void)revertHistory
+{
+    // TODO: change objectAtIndex's index to slider's number
+    self.game = [self.history[0] objectAtIndex:0];
+    self.infoLabel.text = [self.history[1] objectAtIndex:0];
+    self.infoLabel.alpha = 0.3;
 }
 
 - (IBAction)touchRedealButton:(UIButton *)sender
@@ -87,6 +120,7 @@
     // Let user select two/three card match upon re-deal
     [self.numberMatchControl setEnabled:YES];
     self.infoLabel.text = @"";
+    self.history = [self restartHistory];
 }
 
 - (void)updateUI
