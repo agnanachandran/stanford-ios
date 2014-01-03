@@ -13,15 +13,20 @@
 @interface CGViewController ()
 @property (strong, nonatomic) IBOutletCollection(UIButton) NSArray *cardButtons;
 @property (strong, nonatomic) CardMatchingGame *game;
+// array of CardMatchingGame and array of infoLabel strings
+@property (strong, nonatomic) NSMutableArray *history;
+@property (weak, nonatomic) IBOutlet UISlider *historySlider;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numberMatchControl;
-// array of CardMatchingGame and array of infoLabel strings
-@property (weak, nonatomic) IBOutlet UISlider *historySlider;
-@property (weak, nonatomic) NSMutableArray *history;
 @end
 
 @implementation CGViewController
+
+- (void)viewDidLoad
+{
+    [self resetGame];
+}
 
 - (CardMatchingGame *)game {
     NSUInteger maxMatch = [self.numberMatchControl selectedSegmentIndex] == 0 ? 2 : 3;
@@ -33,20 +38,6 @@
 
 - (Deck *)createDeck {
     return [[PlayingCardDeck alloc] init];
-}
-
-- (NSMutableArray *)history
-{
-    if (!_history) _history = [self restartHistory];
-    return _history;
-}
-
-- (NSMutableArray *)restartHistory
-{
-    return [[NSMutableArray alloc] initWithObjects: @[], @[], nil];
-}
-- (IBAction)historySliderChanged:(UISlider *)sender {
-    
 }
 
 - (IBAction)touchCardButton:(UIButton *)sender {
@@ -78,35 +69,64 @@
         [chosenCards addObject:card];
     }
     [self updateInfoLabelWithCards:chosenCards];
-    
     [self updateHistory];
+    self.infoLabel.alpha = 1;
+    
+    // Delete all history after the history slider's max value
+//    for (int i = roundf(self.historySlider.value); i > self.historySlider.maximumValue; i--) {
+//        [self.history[0] removeLastObject];
+//        [self.history[1] removeLastObject];
+//    }
+//    
+//    // set max. value to history slider's current value
+//    self.historySlider.maximumValue = self.historySlider.value;
+}
+
+- (NSMutableArray *)history
+{
+    if (!_history) _history = [self restartHistory];
+    return _history;
+}
+
+- (NSMutableArray *)restartHistory
+{
+    self.historySlider.value = 0;
+    self.historySlider.maximumValue = 0;
+    return [[NSMutableArray alloc] initWithObjects: [[NSMutableArray alloc] init], [[NSMutableArray alloc] init], nil];
 }
 
 - (void)updateHistory
 {
-    [self.history[0] addObject:self.game];
+    [self.history[0] addObject:_game];
     [self.history[1] addObject:self.infoLabel.text];
+    
+    [self.historySlider setMaximumValue:self.historySlider.maximumValue + 1]; // increment maximum possible value of slider
+    [self.historySlider setValue:self.historySlider.maximumValue]; // set to maximum value
+}
+
+- (IBAction)historySliderChanged:(UISlider *)sender {
+    [self revertHistory];
+    [self updateUI];
 }
 
 - (void)revertHistory
 {
-    // TODO: change objectAtIndex's index to slider's number
-    self.game = [self.history[0] objectAtIndex:0];
-    self.infoLabel.text = [self.history[1] objectAtIndex:0];
-    self.infoLabel.alpha = 0.3;
+    NSInteger sliderValue = (int)roundf([self.historySlider value]);
+    NSLog(@"%ld", [self.history[0] count]);
+    // TODO: Y U NO WORK
+    CardMatchingGame *game = [self.history[0] objectAtIndex:sliderValue];
+    _game = game;
+    self.infoLabel.text = [self.history[1] objectAtIndex:sliderValue];
+    if (sliderValue != self.historySlider.maximumValue) {
+        self.infoLabel.alpha = 0.3;
+    } else {
+        self.infoLabel.alpha = 1;
+    }
 }
 
 - (IBAction)touchRedealButton:(UIButton *)sender
 {
     [self resetGame];
-}
-
-- (IBAction)touchNumberMatchControl:(UISegmentedControl *)sender
-{
-    UISegmentedControl *control = sender;
-    // set maximum number of cards to match
-    // zeroth segment is 2-match; 1st segment is 3-match
-    self.game.maxMatch = [control selectedSegmentIndex] == 0 ? 2 : 3;
 }
 
 - (void)resetGame
@@ -121,10 +141,14 @@
     [self.numberMatchControl setEnabled:YES];
     self.infoLabel.text = @"";
     self.history = [self restartHistory];
+    // add game and infoLabel text to history
+    [self.history[0] addObject:self.game];
+    [self.history[1] addObject:self.infoLabel.text];
 }
 
 - (void)updateUI
 {
+    NSLog([NSString stringWithFormat:@"UISlider value: %d", (int)roundf(self.historySlider.value)]);
     for (UIButton *cardButton in self.cardButtons) {
         NSInteger cardIndex = [self.cardButtons indexOfObject:cardButton];
         Card *card = [self.game cardAtIndex:cardIndex];
@@ -174,6 +198,14 @@
             self.infoLabel.text = [NSString stringWithFormat:@"%@, %@, and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, thirdCard.contents, self.game.lastScore];
         }
     }
+}
+
+- (IBAction)touchNumberMatchControl:(UISegmentedControl *)sender
+{
+    UISegmentedControl *control = sender;
+    // set maximum number of cards to match
+    // zeroth segment is 2-match; 1st segment is 3-match
+    self.game.maxMatch = [control selectedSegmentIndex] == 0 ? 2 : 3;
 }
 
 - (NSString *)titleForCard:(Card *)card
