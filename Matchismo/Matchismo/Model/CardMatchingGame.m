@@ -47,8 +47,8 @@
                 break;
             }
         }
+        self.maxMatch = maxMatch;
     }
-    self.maxMatch = maxMatch;
     return self;
 }
 

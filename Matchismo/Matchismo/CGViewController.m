@@ -14,7 +14,7 @@
 @property (strong, nonatomic) IBOutletCollection(UIButton) NSArray *cardButtons;
 @property (strong, nonatomic) CardMatchingGame *game;
 // array of CardMatchingGame and array of infoLabel strings
-@property (strong, nonatomic) NSMutableArray *history;
+@property (strong, nonatomic) NSMutableArray *history; // of infoLabel NSStrings
 @property (weak, nonatomic) IBOutlet UISlider *historySlider;
 @property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
@@ -70,16 +70,6 @@
     }
     [self updateInfoLabelWithCards:chosenCards];
     [self updateHistory];
-    self.infoLabel.alpha = 1;
-    
-    // Delete all history after the history slider's max value
-//    for (int i = roundf(self.historySlider.value); i > self.historySlider.maximumValue; i--) {
-//        [self.history[0] removeLastObject];
-//        [self.history[1] removeLastObject];
-//    }
-//    
-//    // set max. value to history slider's current value
-//    self.historySlider.maximumValue = self.historySlider.value;
 }
 
 - (NSMutableArray *)history
@@ -92,16 +82,17 @@
 {
     self.historySlider.value = 0;
     self.historySlider.maximumValue = 0;
-    return [[NSMutableArray alloc] initWithObjects: [[NSMutableArray alloc] init], [[NSMutableArray alloc] init], nil];
+    NSMutableArray *history = [[NSMutableArray alloc] init];
+    [history addObject:self.infoLabel.text];
+    return history;
 }
 
 - (void)updateHistory
 {
-    [self.history[0] addObject:_game];
-    [self.history[1] addObject:self.infoLabel.text];
-    
+    [self.history addObject:self.infoLabel.text];
     [self.historySlider setMaximumValue:self.historySlider.maximumValue + 1]; // increment maximum possible value of slider
     [self.historySlider setValue:self.historySlider.maximumValue]; // set to maximum value
+    self.infoLabel.alpha = 1;
 }
 
 - (IBAction)historySliderChanged:(UISlider *)sender {
@@ -112,11 +103,7 @@
 - (void)revertHistory
 {
     NSInteger sliderValue = (int)roundf([self.historySlider value]);
-    NSLog(@"%ld", [self.history[0] count]);
-    // TODO: Y U NO WORK
-    CardMatchingGame *game = [self.history[0] objectAtIndex:sliderValue];
-    _game = game;
-    self.infoLabel.text = [self.history[1] objectAtIndex:sliderValue];
+    self.infoLabel.text = self.history[sliderValue];
     if (sliderValue != self.historySlider.maximumValue) {
         self.infoLabel.alpha = 0.3;
     } else {
@@ -141,14 +128,10 @@
     [self.numberMatchControl setEnabled:YES];
     self.infoLabel.text = @"";
     self.history = [self restartHistory];
-    // add game and infoLabel text to history
-    [self.history[0] addObject:self.game];
-    [self.history[1] addObject:self.infoLabel.text];
 }
 
 - (void)updateUI
 {
-    NSLog([NSString stringWithFormat:@"UISlider value: %d", (int)roundf(self.historySlider.value)]);
     for (UIButton *cardButton in self.cardButtons) {
         NSInteger cardIndex = [self.cardButtons indexOfObject:cardButton];
         Card *card = [self.game cardAtIndex:cardIndex];
@@ -158,7 +141,7 @@
                               forState:UIControlStateNormal];
         cardButton.enabled = !card.isMatched;
     }
-    self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld", self.game.score];
+    self.scoreLabel.text = [NSString stringWithFormat:@"Score: %ld", (long)self.game.score];
 }
 
 - (void)updateInfoLabelWithCards:(NSMutableArray *)chosenCards
@@ -180,9 +163,9 @@
         Card *secondCard = chosenCards[1];
         if (self.game.maxMatch == 2) {
             if (didMatch) {
-                self.infoLabel.text = [NSString stringWithFormat:@"Matched %@ and %@ for %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+                self.infoLabel.text = [NSString stringWithFormat:@"Matched %@ and %@ for %ld points.", firstCard.contents, secondCard.contents, (long)self.game.lastScore];
             } else {
-                self.infoLabel.text = [NSString stringWithFormat:@"%@ and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, self.game.lastScore];
+                self.infoLabel.text = [NSString stringWithFormat:@"%@ and %@ don't match! Penalty of %ld points.", firstCard.contents, secondCard.contents, (long)self.game.lastScore];
             }
         } else if (self.game.maxMatch == 3) {
             // User just chose another card in 3-match mode
